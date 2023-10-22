@@ -1,12 +1,228 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:invoice_generator_new/Screens/util.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+
+import 'package:pdf/widgets.dart' as pw;
 
 class InvoiceTemplate extends StatelessWidget {
   final int total;
   final int tax = 5;
   late final double finalTotal;
+
+  final pdf = pw.Document(title: "Invoice");
+
   InvoiceTemplate({Key? key, required this.total}) : super(key: key) {
     finalTotal = total + (total * tax / 100);
+  }
+
+  void initState() async {
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) {
+          return pw.ListView(
+            children: [
+              pw.Padding(
+                padding: pw.EdgeInsets.all(16.0),
+                child: pw.Column(
+                  children: [
+                    // Invoice header
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Invoice',
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold, fontSize: 28),
+                        ),
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.end,
+                          children: [
+                            pw.Text(
+                              'Your Customer',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold, fontSize: 16),
+                            ),
+                            pw.Text(
+                              'Bravo Street S\njakarta, indonesia 2850',
+                              style: pw.TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 50),
+
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.start,
+                      children: [
+                        pw.SizedBox(
+                          width: 70,
+                        ),
+                        // Container(),
+                        pw.Expanded(
+                          child: pw.Column(
+                            children: [
+                              pw.Row(
+                                children: [
+                                  pw.Text(
+                                    'INVOICE      2023-123',
+                                    style: pw.TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: pw.FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              pw.Divider(
+                                thickness: 2,
+                                color: PdfColor.fromInt(0xFF000000),
+                              ),
+                              pw.Row(
+                                mainAxisAlignment:
+                                    pw.MainAxisAlignment.spaceBetween,
+                                children: [
+                                  pw.Text(
+                                    'Item',
+                                    style: pw.TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: pw.FontWeight.bold),
+                                  ),
+                                  pw.Text(
+                                    'Qty',
+                                    style: pw.TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: pw.FontWeight.bold),
+                                  ),
+                                  pw.Text(
+                                    'Description',
+                                    style: pw.TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: pw.FontWeight.bold),
+                                  ),
+                                  pw.Text(
+                                    'Total',
+                                    style: pw.TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: pw.FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              pw.Divider(
+                                thickness: 2,
+                                color: const PdfColor.fromInt(0xFF000000),
+                              ),
+                              for (var i = 1; i <= cartList.length; i++)
+                                pdfRow(
+                                    formatNumber(i),
+                                    cartList.elementAt(i - 1)["name"],
+                                        "${cartList.elementAt(i - 1)["price"]} \$"),
+                              pw.SizedBox(
+                                height: 70,
+                              ),
+                              pw.Divider(
+                                thickness: 2,
+                                color: const PdfColor.fromInt(0xFF000000),
+                              ),
+                              pw.Row(
+                                children: [
+                                  pw.SizedBox(
+                                    width: 90,
+                                  ),
+                                  pw.Expanded(
+                                    child: pw.Table(
+                                      children: [
+                                        pw.TableRow(children: [
+                                          pw.Text(
+                                            'Sub-total',
+                                            style: pw.TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                          pw.Text(
+                                            total.toString(),
+                                            style: pw.TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                        ]),
+                                        pw.TableRow(children: [
+                                          pw.Text(
+                                            'Tax',
+                                            style: pw.TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                          pw.Text(
+                                            "$tax%",
+                                            style: pw.TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                        ]),
+                                        pw.TableRow(children: [
+                                          pw.Text(
+                                            'Amount due',
+                                            style: pw.TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                          pw.Text(
+                                            finalTotal.toString(),
+                                            style: pw.TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: pw.FontWeight.bold),
+                                          ),
+                                        ])
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+
+                    pw.Row(
+                      children: [
+                        pw.Column(
+                          mainAxisAlignment: pw.MainAxisAlignment.start,
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.SizedBox(
+                              height: 32,
+                            ),
+                            pw.Text(
+                              'Order from Zomato',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold, fontSize: 16),
+                            ),
+                            pw.SizedBox(
+                              height: 16,
+                            ),
+                            pw.Text(
+                              'Bravo Street S\njakarta, indonesia,\n2850',
+                              style: pw.TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -14,6 +230,30 @@ class InvoiceTemplate extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Invoice'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: InkWell(
+              onTap: () async {
+                initState();
+
+                final pdfFile = await pdf.save();
+
+                final directory = await getDownloadsDirectory();
+                final filePath = '${directory?.path}/invoice.pdf';
+
+                final pdfFileFile = File(filePath);
+                await pdfFileFile.writeAsBytes(pdfFile);
+
+
+                var res = await OpenFile.open(filePath);
+                // res.type;
+                print(res.message);
+              },
+              child: const Text('Generate PDF')
+            ),
+          ),
+        ],
       ),
       body: ListView(
         children: [
@@ -28,20 +268,24 @@ class InvoiceTemplate extends StatelessWidget {
                   children: [
                     Text(
                       'Invoice',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
                     ),
-                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text(
-                        'Your Customer',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        textAlign: TextAlign.end,
-                      ),
-                      Text(
-                        'Bravo Street S\njakarta, indonesia 2850',
-                        style: TextStyle(fontSize: 16),
-                        textAlign: TextAlign.end,
-                      ),
-                    ]),
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Your Customer',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                            textAlign: TextAlign.end,
+                          ),
+                          Text(
+                            'Bravo Street S\njakarta, indonesia 2850',
+                            style: TextStyle(fontSize: 16),
+                            textAlign: TextAlign.end,
+                          ),
+                        ]),
                   ],
                 ),
                 const SizedBox(height: 50),
@@ -96,7 +340,8 @@ class InvoiceTemplate extends StatelessWidget {
                             RowItem(
                                 itemNumber: formatNumber(i),
                                 itemName: cartList.elementAt(i - 1)["name"],
-                                itemPrice: "${cartList.elementAt(i - 1)["price"]} \$"),
+                                itemPrice:
+                                    "${cartList.elementAt(i - 1)["price"]} \$"),
                           const SizedBox(
                             height: 70,
                           ),
@@ -173,8 +418,8 @@ class InvoiceTemplate extends StatelessWidget {
                         ),
                         const Text(
                           'Coffee Brand Inc.',
-                          style:
-                              TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         const SizedBox(
                           height: 16,
@@ -282,4 +527,28 @@ class RowItem extends StatelessWidget {
       ],
     );
   }
+}
+
+pw.Row pdfRow(String itemNumber, String itemName, String itemPrice) {
+  return pw.Row(
+    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+    children: [
+      pw.Text(
+        itemNumber,
+        style: const pw.TextStyle(fontSize: 16),
+      ),
+      pw.Text(
+        "01",
+        style: const pw.TextStyle(fontSize: 16),
+      ),
+      pw.Text(
+        itemName,
+        style: const pw.TextStyle(fontSize: 16),
+      ),
+      pw.Text(
+        itemPrice,
+        style: const pw.TextStyle(fontSize: 16),
+      ),
+    ],
+  );
 }
